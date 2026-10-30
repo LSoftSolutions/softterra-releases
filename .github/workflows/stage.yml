@@ -1,0 +1,62 @@
+name: Stage reviewed installers
+on:
+  workflow_dispatch:
+    inputs:
+      manifest:
+        description: Reviewed asset digests and short-lived binary download URLs
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: distribution-staging
+  cancel-in-progress: false
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Receive reviewed assets directly
+        env:
+          TRANSFER_MANIFEST: ${{ inputs.manifest }}
+        run: python3 scripts/fetch-reviewed-assets.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Verify all installers, source reports and signed versions
+        env:
+          SOFTTERRA_UPDATE_PUBLIC_KEY: ${{ vars.SOFTTERRA_UPDATE_PUBLIC_KEY }}
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          import {validateDistribution} from './scripts/validate-distribution.mjs';
+          const source=JSON.parse(readFileSync('transfer-source.json'));
+          const {latest,catalog,assets}=validateDistribution('reviewed-assets',process.env.GITHUB_REPOSITORY,source.tag,true);
+          const report=JSON.parse(readFileSync('reviewed-assets/qualification.json'));
+          if(Object.values(report.platforms).some(r=>r.sourceCommit!==source.sourceCommit))throw Error('Build source mismatch');
+          writeFileSync('public-key.txt',process.env.SOFTTERRA_UPDATE_PUBLIC_KEY);
+          for(const row of Object.values(latest.platforms)){
+            const name=decodeURIComponent(new URL(row.url).pathname.split('/').at(-1));
+            execFileSync('cargo',['run','--locked','--quiet','--manifest-path','tools/update-verifier/Cargo.toml','--','public-key.txt','reviewed-assets/'+name,'reviewed-assets/'+name+'.sig',catalog.version],{stdio:'inherit'});
+          }
+          writeFileSync('asset-list.json',JSON.stringify(assets));
+          writeFileSync('NOTES.md',catalog.notes.fr+'\n\n'+catalog.notes.en+'\n\nBêta : signatures updater vérifiées. Signature ad-hoc sur macOS ; installateur Windows sans certificat de confiance natif.\n\nBeta: updater signatures verified. Ad-hoc macOS signing; Windows installer without a trusted native certificate.\n');
+          JS
+      - name: Prepare public draft for publication review
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          const {tag}=JSON.parse(readFileSync('transfer-source.json'));
+          const gh=(...a)=>execFileSync('gh',a,{encoding:'utf8'});
+          let existing;try{existing=JSON.parse(gh('release','view',tag,'--json','isDraft'));}catch{}
+          if(existing&&!existing.isDraft)throw Error('Published releases are immutable');
+          const files=JSON.parse(readFileSync('asset-list.json')).map(n=>'reviewed-assets/'+n);
+          if(existing){gh('release','upload',tag,...files,'--clobber');gh('release','edit',tag,'--notes-file','NOTES.md');}
+          else gh('release','create',tag,...files,'--draft','--prerelease','--title','SoftTerra '+tag.slice(1),'--notes-file','NOTES.md');
+          console.log('Verified distribution draft is ready for publication review.');
+          JS
