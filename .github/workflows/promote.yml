@@ -36,7 +36,7 @@ jobs:
       - name: Validate manifests and installer checksums before publishing
         run: |
           node --input-type=module <<'JS'
-          import {readFileSync, mkdirSync, copyFileSync} from 'node:fs';
+          import {readFileSync, existsSync, mkdirSync, copyFileSync} from 'node:fs';
           import {createHash} from 'node:crypto';
           import {basename} from 'node:path';
           const root='/tmp/release-assets/';
@@ -50,6 +50,15 @@ jobs:
           if(tag!=='v'+latest.version||catalog.version!==latest.version||catalog.channel!==channel||catalog.schemaVersion!==1||release.isPrerelease!==beta)throw Error('Version or channel mismatch');
           if(!catalog.notes?.fr?.trim()||!catalog.notes?.en?.trim()||JSON.stringify(JSON.parse(latest.notes))!==JSON.stringify(catalog.notes))throw Error('Bilingual notes mismatch');
           if(JSON.stringify(Object.keys(latest.platforms).sort())!==JSON.stringify([...targets].sort())||catalog.downloads?.length!==3||new Set(catalog.downloads.map(f=>f.target)).size!==3)throw Error('Incomplete platforms');
+          const report=JSON.parse(readFileSync(root+'qualification.json'));
+          if(report.schemaVersion!==1||report.version!==latest.version||JSON.stringify(Object.keys(report.platforms).sort())!==JSON.stringify([...targets].sort()))throw Error('Missing installer qualification');
+          const commits=new Set();
+          for(const target of targets){const q=report.platforms[target];if(q.version!==latest.version||q.target!==target||q.installer!==true||q.installedEngine!==true||q.signatureVerified!==true||!/^[a-f0-9]{40}$/.test(q.sourceCommit)||!['preview','production'].includes(q.signingMode)||(!beta&&q.signingMode!=='production'))throw Error('Unqualified installer');commits.add(q.sourceCommit);}
+          if(commits.size!==1)throw Error('Inconsistent build sources');
+          // Reject accidental channel rollback, including numeric prerelease identifiers.
+          function compare(a,b){const parse=v=>{const m=/^(\d+)\.(\d+)\.(\d+)(?:-([\w.-]+))?$/.exec(v);if(!m)throw Error('Invalid semantic version');return {core:m.slice(1,4).map(Number),pre:m[4]?.split('.')};};const x=parse(a),y=parse(b);for(let i=0;i<3;i++)if(x.core[i]!==y.core[i])return Math.sign(x.core[i]-y.core[i]);if(!x.pre||!y.pre)return x.pre?-1:y.pre?1:0;for(let i=0;i<Math.max(x.pre.length,y.pre.length);i++){const u=x.pre[i],v=y.pre[i];if(u===undefined)return -1;if(v===undefined)return 1;if(u===v)continue;const un=/^\d+$/.test(u),vn=/^\d+$/.test(v);return un&&vn?Math.sign(Number(u)-Number(v)):un?-1:vn?1:u<v?-1:1;}return 0;}
+          if(existsSync(`${channel}/latest.json`)&&compare(latest.version,JSON.parse(readFileSync(`${channel}/latest.json`)).version)<0)throw Error('Channel rollback refused');
+          const hashes=[];
           function asset(url){const prefix=`https://github.com/${process.env.GITHUB_REPOSITORY}/releases/download/${tag}/`;if(!url.startsWith(prefix))throw Error('Wrong asset host or release');const name=decodeURIComponent(url.slice(prefix.length));if(name!==basename(name)||/[\\/]/.test(name))throw Error('Invalid asset path');return name;}
           for(const target of targets){
             const update=latest.platforms[target];const name=asset(update.url);
@@ -60,7 +69,9 @@ jobs:
             const installer=asset(file.url);if(installer!==file.filename||!installer.startsWith(target+'-')||!installer.endsWith(target.startsWith('windows-')?'.exe':'.dmg'))throw Error('Invalid installer');
             const bytes=readFileSync(root+installer);
             if(bytes.length!==file.size||createHash('sha256').update(bytes).digest('hex')!==file.sha256)throw Error('Installer checksum mismatch');
+            hashes.push(`${file.sha256}  ${installer}`);
           }
+          if(readFileSync(root+'SHA256SUMS','utf8').trim()!==hashes.join('\n'))throw Error('Checksum catalog mismatch');
           mkdirSync(channel,{recursive:true});
           for(const file of ['latest.json','downloads.json'])copyFileSync(root+file,`${channel}/${file}`);
           JS

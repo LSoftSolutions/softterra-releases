@@ -13,7 +13,7 @@ Ce dépôt public distribue les installateurs Windows et macOS de SoftTerra Desk
 - L'absence d'un manifeste indique qu'aucune version n'a encore été promue dans le canal concerné.
 - La signature Tauri des mises à jour est distincte des signatures Windows et Apple. Les limites des préversions seront précisées dans les notes de publication.
 
-Le workflow **Promote validated release** publie un brouillon préparé, puis actualise les fichiers du canal dans un seul commit après validation des artefacts. Il nécessite une qualification manuelle des installateurs et utilise uniquement les droits de ce dépôt de distribution.
+Le workflow **Promote validated release** publie un brouillon préparé, puis actualise les fichiers du canal dans un seul commit après validation des artefacts. Il exige les rapports de qualification Windows et Mac, vérifie les sommes de contrôle et refuse de faire reculer le canal. La validation de publication reste explicite ; il utilise uniquement les droits de ce dépôt de distribution.
 
 ---
 
