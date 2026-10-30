@@ -1,0 +1,76 @@
+name: Promote validated release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag, e.g. v0.1.0-beta.1
+        required: true
+        type: string
+      validated:
+        description: I have validated the installers and reviewed their signing limitations
+        type: boolean
+        default: false
+        required: true
+permissions:
+  contents: write
+concurrency:
+  group: distribution-promotion
+  cancel-in-progress: false
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      INSTALLERS_VALIDATED: ${{ inputs.validated }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Validate selected release
+        run: |
+          node -e "if(process.env.INSTALLERS_VALIDATED!=='true'||!/^v\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(process.env.RELEASE_TAG||''))throw Error('Select a valid tag and confirm installer qualification')"
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease > /tmp/release-state.json
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir /tmp/release-assets
+      - name: Validate manifests and installer checksums before publishing
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync, mkdirSync, copyFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          import {basename} from 'node:path';
+          const root='/tmp/release-assets/';
+          const latest=JSON.parse(readFileSync(root+'latest.json'));
+          const catalog=JSON.parse(readFileSync(root+'downloads.json'));
+          const release=JSON.parse(readFileSync('/tmp/release-state.json'));
+          const tag=process.env.RELEASE_TAG;
+          const beta=latest.version.includes('-');
+          const channel=beta?'beta':'stable';
+          const targets=['windows-x86_64','darwin-aarch64','darwin-x86_64'];
+          if(tag!=='v'+latest.version||catalog.version!==latest.version||catalog.channel!==channel||catalog.schemaVersion!==1||release.isPrerelease!==beta)throw Error('Version or channel mismatch');
+          if(!catalog.notes?.fr?.trim()||!catalog.notes?.en?.trim()||JSON.stringify(JSON.parse(latest.notes))!==JSON.stringify(catalog.notes))throw Error('Bilingual notes mismatch');
+          if(JSON.stringify(Object.keys(latest.platforms).sort())!==JSON.stringify([...targets].sort())||catalog.downloads?.length!==3||new Set(catalog.downloads.map(f=>f.target)).size!==3)throw Error('Incomplete platforms');
+          function asset(url){const prefix=`https://github.com/${process.env.GITHUB_REPOSITORY}/releases/download/${tag}/`;if(!url.startsWith(prefix))throw Error('Wrong asset host or release');const name=decodeURIComponent(url.slice(prefix.length));if(name!==basename(name)||/[\\/]/.test(name))throw Error('Invalid asset path');return name;}
+          for(const target of targets){
+            const update=latest.platforms[target];const name=asset(update.url);
+            if(!name.startsWith(target+'-')||!name.endsWith(target.startsWith('windows-')?'.exe':'.app.tar.gz'))throw Error('Wrong updater architecture');
+            readFileSync(root+name);
+            if(!update.signature||readFileSync(root+name+'.sig','utf8').trim()!==update.signature)throw Error('Signature mismatch');
+            const file=catalog.downloads.find(f=>f.target===target);if(!file)throw Error('Missing installer');
+            const installer=asset(file.url);if(installer!==file.filename||!installer.startsWith(target+'-')||!installer.endsWith(target.startsWith('windows-')?'.exe':'.dmg'))throw Error('Invalid installer');
+            const bytes=readFileSync(root+installer);
+            if(bytes.length!==file.size||createHash('sha256').update(bytes).digest('hex')!==file.sha256)throw Error('Installer checksum mismatch');
+          }
+          mkdirSync(channel,{recursive:true});
+          for(const file of ['latest.json','downloads.json'])copyFileSync(root+file,`${channel}/${file}`);
+          JS
+      - name: Publish qualified release and advance its channel
+        run: |
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add stable beta
+          if ! git diff --cached --quiet; then
+            git commit -m "release: promote ${RELEASE_TAG}"
+            git push origin HEAD:main
+          fi
