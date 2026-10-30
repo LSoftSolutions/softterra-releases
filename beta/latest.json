@@ -1,0 +1,19 @@
+{
+  "version": "0.1.0-beta.10",
+  "pub_date": "2026-10-30T20:05:53.056Z",
+  "notes": "{\"fr\":\"Interface alignée sur la version web déployée. Recherche des mises à jour en mode local et serveur, notification de disponibilité et protection des calculs pendant l’installation. Préparation automatique des paquets Windows et Mac, avec contrôle des installateurs et signatures avant publication validée. Inclut la correction de connexion de la bêta 9.\",\"en\":\"Interface aligned with the deployed web version. Update checks in local and server modes, availability notification and protection of running calculations during installation. Automatic preparation of Windows and Mac packages, with installer and signature checks before validated publication. Includes the beta 9 sign-in fix.\"}",
+  "platforms": {
+    "windows-x86_64": {
+      "url": "https://github.com/LSoftSolutions/softterra-releases/releases/download/v0.1.0-beta.10/windows-x86_64-SoftTerra_0.1.0-beta.10_x64-setup.exe",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRbUlOTVRCRE1MWS81dWRGVVdpdkkrbUxxd3lrcEJlUytmL2pNOWh2UEltbER6bkRYb1dXR3Q1NDBIN05wV3BXcml0ZFZ1L3l5VDltVDFIYVVDbStJL0hnVDNoRlBGL1FzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMzkwNTc2CWZpbGU6U29mdFRlcnJhXzAuMS4wLWJldGEuMTBfeDY0LXNldHVwLmV4ZQl2ZXJzaW9uOjAuMS4wLWJldGEuMTAKSzEwZWV5OGQ4bWxTS2tkZHhXSC9UQUtYN2p4RHROZTBQNmlVQzBNSFArSVh0TktLemZORkpvaXAzNEkrc00rcEpXQWR6MUdhdi9temI1MXdoNmtWQ0E9PQo="
+    },
+    "darwin-aarch64": {
+      "url": "https://github.com/LSoftSolutions/softterra-releases/releases/download/v0.1.0-beta.10/darwin-aarch64-SoftTerra.app.tar.gz",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRbUlOTVRCRE1MWTFxR2xEdVZUV2Y5c0M3WnFkUXh2NG1Kb1NvYzJPUFo3aktHTUpYMVBlN3RLeE5kT05KWGJoQWdVQ3hxa3ZRVFBvNFc0YnNwaXRCVkdHTXZiUDVCS0F3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMzg5ODgyCWZpbGU6U29mdFRlcnJhLmFwcC50YXIuZ3oJdmVyc2lvbjowLjEuMC1iZXRhLjEwCjJZZ3NkSlY3QS90NXRmV0dTM2k5Ni84eFNtRzNYMDYyQUo5c0t0Q3lWQjVVWjlKWlJXK0d3QjlueVVPNW44bEMxUC81eWFmSGJMTTdNY1ZCQ242a0FRPT0K"
+    },
+    "darwin-x86_64": {
+      "url": "https://github.com/LSoftSolutions/softterra-releases/releases/download/v0.1.0-beta.10/darwin-x86_64-SoftTerra.app.tar.gz",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRbUlOTVRCRE1MWTRZYXJQYUJOR0FlZW0rRkpTaWcyOEJ1SGtvYUQzOVBXZjJTR1R4b3NuL0llWkxSeG5QUEd3VXhHV3M1aDFHbWFFNlB4MTFpaVZoMWdpV2JUdmQ5MEFrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMzkwNTI1CWZpbGU6U29mdFRlcnJhLmFwcC50YXIuZ3oJdmVyc2lvbjowLjEuMC1iZXRhLjEwCmZLaXdhL0ZIVjhTMkh1Nks0cTFWSUZvdUVqSm02WElDNXNXMG9yMVNvVHExbFNwT1FSUWJDbDBiWlczVm82QzZxTVZLa2JyMFVTdzFURjBtT1FkV0NRPT0K"
+    }
+  }
+}

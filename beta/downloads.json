@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "version": "0.1.0-beta.10",
+  "channel": "beta",
+  "publishedAt": "2026-10-30T20:05:53.056Z",
+  "notes": {
+    "fr": "Interface alignée sur la version web déployée. Recherche des mises à jour en mode local et serveur, notification de disponibilité et protection des calculs pendant l’installation. Préparation automatique des paquets Windows et Mac, avec contrôle des installateurs et signatures avant publication validée. Inclut la correction de connexion de la bêta 9.",
+    "en": "Interface aligned with the deployed web version. Update checks in local and server modes, availability notification and protection of running calculations during installation. Automatic preparation of Windows and Mac packages, with installer and signature checks before validated publication. Includes the beta 9 sign-in fix."
+  },
+  "downloads": [
+    {
+      "target": "windows-x86_64",
+      "filename": "windows-x86_64-SoftTerra_0.1.0-beta.10_x64-setup.exe",
+      "url": "https://github.com/LSoftSolutions/softterra-releases/releases/download/v0.1.0-beta.10/windows-x86_64-SoftTerra_0.1.0-beta.10_x64-setup.exe",
+      "size": 49656507,
+      "sha256": "845c0a352993e8522d90428b818f02e81e1ae666fc71f1124da552a6fa6cb74e"
+    },
+    {
+      "target": "darwin-aarch64",
+      "filename": "darwin-aarch64-SoftTerra_0.1.0-beta.10_aarch64.dmg",
+      "url": "https://github.com/LSoftSolutions/softterra-releases/releases/download/v0.1.0-beta.10/darwin-aarch64-SoftTerra_0.1.0-beta.10_aarch64.dmg",
+      "size": 95204916,
+      "sha256": "ce55dc605a7107e424b4b1577d61fd31edca31c8881dab336b7d777e2add28e5"
+    },
+    {
+      "target": "darwin-x86_64",
+      "filename": "darwin-x86_64-SoftTerra_0.1.0-beta.10_x64.dmg",
+      "url": "https://github.com/LSoftSolutions/softterra-releases/releases/download/v0.1.0-beta.10/darwin-x86_64-SoftTerra_0.1.0-beta.10_x64.dmg",
+      "size": 116621401,
+      "sha256": "c2b27f10f84455023a68eec6f047da5d696a4500aa69a2e08038ed4f47dce46e"
+    }
+  ]
+}
