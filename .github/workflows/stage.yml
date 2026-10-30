@@ -17,8 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Receive reviewed assets directly
-        env:
-          TRANSFER_MANIFEST: ${{ inputs.manifest }}
         run: python3 scripts/fetch-reviewed-assets.py
       - uses: actions/setup-node@v4
         with:

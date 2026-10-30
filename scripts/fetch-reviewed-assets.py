@@ -8,7 +8,8 @@ import re
 import urllib.parse
 import urllib.request
 
-manifest = json.loads(os.environ['TRANSFER_MANIFEST'])
+event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+manifest = json.loads(event['inputs']['manifest'])
 tag = manifest['tag']
 assert re.fullmatch(r'v\d+\.\d+\.\d+-[\w.-]+', tag), 'Beta tag required'
 assert re.fullmatch(r'[a-f0-9]{40}', manifest['sourceCommit'])
